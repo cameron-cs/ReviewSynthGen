@@ -1,0 +1,6 @@
+pandas
+numpy
+redshift_connector
+boto3
+botocore
+matplotlib
