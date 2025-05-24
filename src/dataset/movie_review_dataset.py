@@ -12,6 +12,13 @@ def clean_text(text: str) -> str:
     return re.sub(r'\s+', ' ', str(text).strip())
 
 
+def clean_columns(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    for col in columns:
+        df = df[df[col].notnull()]
+        df[col] = df[col].apply(clean_text)
+    return df
+
+
 class BaseDataset:
     def __init__(self):
         self.df: Optional[pd.DataFrame] = None
@@ -30,12 +37,7 @@ class LocalCriticReviewDataset(BaseDataset):
 
     def load(self):
         df = pd.read_csv(self.path)
-        df = df[df['rotten_tomatoes_link'].notnull()]
-        df = df[df['review_score'].notnull()]
-        df = df[df['review_content'].notnull()]
-        df['rotten_tomatoes_link'] = df['rotten_tomatoes_link'].apply(clean_text)
-        df['review_score'] = df['review_score'].apply(clean_text)
-        df['review_content'] = df['review_content'].apply(clean_text)
+        df = clean_columns(df, ['rotten_tomatoes_link', 'review_score', 'review_content'])
         self.df = df
         logging.info(f"Loaded {len(df)} critic reviews from local CSV")
         return self.df
@@ -48,12 +50,7 @@ class LocalMovieMetadataDataset(BaseDataset):
 
     def load(self):
         df = pd.read_csv(self.path)
-        df = df[df['rotten_tomatoes_link'].notnull()]
-        df = df[df['movie_title'].notnull()]
-        df = df[df['movie_info'].notnull()]
-        df['rotten_tomatoes_link'] = df['rotten_tomatoes_link'].apply(clean_text)
-        df['movie_title'] = df['movie_title'].apply(clean_text)
-        df['movie_info'] = df['movie_info'].apply(clean_text)
+        df = clean_columns(df, ['rotten_tomatoes_link', 'movie_title', 'movie_info'])
         self.df = df
         logging.info(f"Loaded {len(df)} movie metadata rows from local CSV")
         return self.df
@@ -72,12 +69,7 @@ class S3CriticReviewDataset(BaseDataset):
         s3 = boto3.client("s3")
         obj = s3.get_object(Bucket=self.bucket, Key=self.key)
         df = pd.read_csv(io.BytesIO(obj['Body'].read()))
-        df = df[df['rotten_tomatoes_link'].notnull()]
-        df = df[df['review_score'].notnull()]
-        df = df[df['review_content'].notnull()]
-        df['rotten_tomatoes_link'] = df['rotten_tomatoes_link'].apply(clean_text)
-        df['review_score'] = df['review_score'].apply(clean_text)
-        df['review_content'] = df['review_content'].apply(clean_text)
+        df = clean_columns(df, ['rotten_tomatoes_link', 'review_score', 'review_content'])
         self.df = df
         logging.info(f"Loaded {len(df)} critic reviews from S3")
         return self.df
@@ -96,12 +88,7 @@ class S3MovieMetadataDataset(BaseDataset):
         s3 = boto3.client("s3")
         obj = s3.get_object(Bucket=self.bucket, Key=self.key)
         df = pd.read_csv(io.BytesIO(obj['Body'].read()))
-        df = df[df['rotten_tomatoes_link'].notnull()]
-        df = df[df['movie_title'].notnull()]
-        df = df[df['movie_info'].notnull()]
-        df['rotten_tomatoes_link'] = df['rotten_tomatoes_link'].apply(clean_text)
-        df['movie_title'] = df['movie_title'].apply(clean_text)
-        df['movie_info'] = df['movie_info'].apply(clean_text)
+        df = clean_columns(df, ['rotten_tomatoes_link', 'movie_title', 'movie_info'])
         self.df = df
         logging.info(f"Loaded {len(df)} movie metadata rows from S3")
         return self.df
@@ -129,12 +116,7 @@ class RedshiftCriticReviewDataset(BaseDataset):
         cursor.close()
         conn.close()
 
-        df = df[df['rotten_tomatoes_link'].notnull()]
-        df = df[df['review_score'].notnull()]
-        df = df[df['review_content'].notnull()]
-        df['rotten_tomatoes_link'] = df['rotten_tomatoes_link'].apply(clean_text)
-        df['review_score'] = df['review_score'].apply(clean_text)
-        df['review_content'] = df['review_content'].apply(clean_text)
+        df = clean_columns(df, ['rotten_tomatoes_link', 'review_score', 'review_content'])
         self.df = df
 
         logging.info(f"Loaded {len(df)} critic reviews from Redshift")
@@ -163,12 +145,7 @@ class RedshiftMovieMetadataDataset(BaseDataset):
         cursor.close()
         conn.close()
 
-        df = df[df['rotten_tomatoes_link'].notnull()]
-        df = df[df['movie_title'].notnull()]
-        df = df[df['movie_info'].notnull()]
-        df['rotten_tomatoes_link'] = df['rotten_tomatoes_link'].apply(clean_text)
-        df['movie_title'] = df['movie_title'].apply(clean_text)
-        df['movie_info'] = df['movie_info'].apply(clean_text)
+        df = clean_columns(df, ['rotten_tomatoes_link', 'movie_title', 'movie_info'])
         self.df = df
 
         logging.info(f"Loaded {len(df)} movie metadata rows from Redshift")
